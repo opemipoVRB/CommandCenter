@@ -107,15 +107,15 @@ class MobileClient:
                 time.sleep(1)
                 print("Get Dashboards")
                 urls_one = [
-                    'https://flightaware.com/live/map',
-                    'https://flightaware.com/adsb/stats/user/EbenezerOg#stats-34294',
+                    "https://flightaware.com/live/map",
+                    "https://flightaware.com/adsb/stats/user/EbenezerOg#stats-34294",
                 ]
 
                 urls_two = [
-                    'http://127.0.0.1:5000/#/2',
-                    'https://apply.abudlc.edu.ng/api/',
-                    'http://127.0.0.1:5000/#/3/3',
-                    'http://127.0.0.1:5000/#/4/3']
+                    "http://127.0.0.1:5000/#/2",
+                    "https://apply.abudlc.edu.ng/api/",
+                    "http://127.0.0.1:5000/#/3/3",
+                    "http://127.0.0.1:5000/#/4/3"]
 
                 screen_object = {
                     "operation": "LAUNCHING-SCREENS",

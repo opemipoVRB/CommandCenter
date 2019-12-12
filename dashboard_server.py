@@ -48,12 +48,27 @@
 ↓↓←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←↓↓
 
 """
+import json
 
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
 
 class CommandCenterServerProtocol(WebSocketServerProtocol):
+    connected_clients = []
+
+    available_dashboards = {}
+
+    def __init__(self):
+        super(CommandCenterServerProtocol, self).__init__()
+        self.processes = {
+            "VERIFY-OPERATION": self.verify_operation,
+            "INITIALIZATION": self.initialization,
+            "LAUNCHING-SCREENS": self.launch_screen,
+            "LAUNCHING-SCREENS-RESPONSE": self.launch_screen_response
+        }
+        self.process = "initialization"
+        self.previous_process = None
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
@@ -75,9 +90,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
     def onMessage(self, payload, isBinary):
         """
-
        Callback fired when a complete a message was received.
-
        :param payload:
        :param isBinary:
        :return:
@@ -85,26 +98,159 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         """
         # client is also self
         client = self
-
-        if isBinary:
-            print("Binary message received: {0} bytes".format(len(payload)))
-        else:
-            print("Text message received: {0}".format(payload.decode('utf8')))
-
         # Send Response to every one
-        self.send_broadcast_message(client, payload)
+        payload = payload.decode("utf-8")
+        payload = json.loads(payload)
+        # print("Client {0} sending message: {1}".format(self.peer, payload))
+        try:
+            self.process = payload["operation"]
+        except KeyError:
+            pass
+
+        self.verify_operation(client, payload)
+
+    def verify_operation(self, client, data):
+
+        """
+
+        Verify Operation to be carried out and fire method from.
+
+        :param client:
+        :param data:
+        :return:
+
+        """
+        response = "Verifying initiated operation by " + data["client"] + " client."
+
+        for c in self.factory.clients:
+            try:
+                if "MobileDevice" in c["client"].__dict__["module"]:
+                    self.send_private_message(c["client"], response)  # Action
+            except Exception:
+                pass
+
+        if data["operation"] in self.processes:
+            self.processes[data["operation"]](client, data)
+        else:
+            self.send_broadcast_message(client, "Invalid Operation")
+        return
+
+    def initialization(self, client, data):
+        """
+        Initialization of clients.
+
+        :param client:
+        :param data:
+        :return:
+
+        """
+
+        message = "This are the connected clients"
+        print("Initialization of client {} ".format(client), data)
+
+        client.__dict__.update({"module": data["client"]})
+
+        if "dashboards" in data:
+            self.get_dashboards(data)
+
+        print("Available Dashboards ", self.available_dashboards)
+
+        print("Connected clients", self.get_connected_clients())
+
+        for c in self.factory.clients:
+            if c["client"].__dict__["module"] == client.__dict__["module"]:
+                online_client = {
+                    "client": c["client"].__dict__["module"],
+                }
+                print(online_client["client"], " just connected")
+                self.update_connected_client(online_client)
+
+        # Sent to Mobile device
+
+        for c in self.factory.clients:
+            response = {
+                "message": message,
+                "clients": self.get_connected_clients(),
+                "dashboards": self.available_dashboards
+            }
+            if c["client"].__dict__["module"] == "MobileDevice":
+                self.send_private_message(c["client"], response)
+                print("Private Message sent")
+
+        print("This Clients are now Online ", self.connected_clients)
+
+        return
+
+    @classmethod
+    def get_dashboards(cls, data):
+        cls.available_dashboards = data["dashboards"]
+        return cls.available_dashboards
+
+    @classmethod
+    def update_connected_client(cls, clients):
+        return cls.connected_clients.append(clients)
+
+    @classmethod
+    def update_disconnected_client(cls, clients):
+        return cls.connected_clients.remove(clients)
+
+    @classmethod
+    def get_connected_clients(cls):
+        return cls.connected_clients
+
+    def launch_screen(self, client, data):
+        print("Launch Screen")
+        for c in self.factory.clients:
+            if c["client"].__dict__["module"] == client.__dict__["module"]:
+                online_client = {
+                    "client": c["client"].__dict__["module"],
+                }
+
+            if "CommandCenterScreenClient" in c["client"].__dict__["module"] and \
+                    "LAUNCHING-SCREENS" in data["operation"]:
+                self.send_private_message(c["client"], json.dumps(data))
+        return
+
+    def launch_screen_response(self, client, data):
+        print("Launch Screen")
+        for c in self.factory.clients:
+            if c["client"].__dict__["module"] == client.__dict__["module"]:
+                online_client = {
+                    "client": c["client"].__dict__["module"],
+                }
+
+            # Sent to device manager
+            if "MobileDevice" in c["client"].__dict__["module"] and \
+                    "LAUNCHING-SCREENS-RESPONSE" in data["operation"]:
+                self.send_private_message(c["client"], "Done")
+        return
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
 
+    def connectionLost(self, reason):
+        """
+        Callback fired when the WebSocket connection has been closed
+        (WebSocket closing handshake has been finished or the connection was closed uncleanly).
+        :param reason:
+        :return:
+
+        """
+        self.factory.unregister(self)
+        print("Disconnected ", self.__dict__["module"])
+        self.update_disconnected_client({"client": self.__dict__["module"]})
+        print(self.connected_clients)
+        print("Client disconnected: {0}".format(self.peer))
+
     def send_private_message(self, client, message):
         """
         Response to a single client
-
         :param client:
         :param message:
         :return:
+
         """
+
         self.factory.communicate(client=client, payload=message, isBinary=True)
 
     def send_broadcast_message(self, client, message):
@@ -125,42 +271,42 @@ class CommandCenterFactory(WebSocketServerFactory):
         self.clients = []
 
     def register(self, client):
-        self.clients.append({'client-peer': client.peer, 'client': client})
+        self.clients.append({"client-peer": client.peer, "client": client})
 
     def unregister(self, client):
         for c in self.clients:
-            if c['client-peer'] == client.peer:
+            if c["client-peer"] == client.peer:
                 self.clients.remove(c)
 
     def broadcast_communicate(self, client, payload, isBinary):
         for i, c in enumerate(self.clients):
-            if c['client'] == client:
+            if c["client"] == client:
                 id = i
                 break
         for c in self.clients:
             try:
-                msg = '{0}'.format(payload.decode('utf-8'))
+                msg = "{0}".format(payload.decode("utf-8"))
             except AttributeError:
-                msg = '{0}'.format(payload)
-            c['client'].sendMessage(str.encode(msg))
+                msg = "{0}".format(payload)
+            c["client"].sendMessage(str.encode(msg))
 
     def communicate(self, client, payload, isBinary):
         for i, c in enumerate(self.clients):
-            if c['client'] == client:
+            if c["client"] == client:
                 id = i
                 break
         for c in self.clients:
             # print("This are the present clients   -->", c)
-            if c['client'] == client:
+            if c["client"] == client:
                 # print("Sending message to ", client)
                 try:
-                    msg = '{0}'.format(payload.decode('utf-8'))
+                    msg = "{0}".format(payload.decode("utf-8"))
                 except AttributeError:
-                    msg = '{0}'.format(payload)
-                c['client'].sendMessage(str.encode(msg))
+                    msg = "{0}".format(payload)
+                c["client"].sendMessage(str.encode(msg))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     from twisted.python import log
@@ -176,5 +322,3 @@ if __name__ == '__main__':
 
     reactor.listenTCP(6000, factory)
 reactor.run()
-
-

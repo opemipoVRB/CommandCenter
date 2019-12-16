@@ -53,10 +53,13 @@ import json
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
 
+import sys
+from twisted.python import log
+from twisted.internet import reactor
+
 
 class CommandCenterServerProtocol(WebSocketServerProtocol):
     connected_clients = []
-
     available_dashboards = {}
 
     def __init__(self):
@@ -69,6 +72,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         }
         self.process = "initialization"
         self.previous_process = None
+        self.initalized = False
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
@@ -90,7 +94,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
     def onMessage(self, payload, isBinary):
         """
-       Callback fired when a complete a message was received.
+       Callback fired when a message was received.
        :param payload:
        :param isBinary:
        :return:
@@ -121,14 +125,12 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
         """
         response = "Verifying initiated operation by " + data["client"] + " client."
-
         for c in self.factory.clients:
             try:
                 if "MobileDevice" in c["client"].__dict__["module"]:
                     self.send_private_message(c["client"], response)  # Action
             except Exception:
                 pass
-
         if data["operation"] in self.processes:
             self.processes[data["operation"]](client, data)
         else:
@@ -178,6 +180,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
                 print("Private Message sent")
 
         print("This Clients are now Online ", self.connected_clients)
+        self.initalized = True
 
         return
 
@@ -185,7 +188,6 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
     def get_dashboards(cls, data):
         cls.available_dashboards.update(data["dashboards"])
         return cls.available_dashboards
-
 
     @classmethod
     def update_connected_client(cls, clients):
@@ -197,7 +199,6 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
             cls.available_dashboards.clear()
         return cls.connected_clients.remove(clients)
 
-
     @classmethod
     def get_connected_clients(cls):
         return cls.connected_clients
@@ -205,28 +206,26 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
     def launch_screen(self, client, data):
         print("Launch Screen")
         for c in self.factory.clients:
-            if c["client"].__dict__["module"] == client.__dict__["module"]:
-                online_client = {
-                    "client": c["client"].__dict__["module"],
-                }
-
             if "CommandCenterScreenClient" in c["client"].__dict__["module"] and \
                     "LAUNCHING-SCREENS" in data["operation"]:
                 self.send_private_message(c["client"], json.dumps(data))
         return
 
     def launch_screen_response(self, client, data):
-        print("Launch Screen")
-        for c in self.factory.clients:
-            if c["client"].__dict__["module"] == client.__dict__["module"]:
-                online_client = {
-                    "client": c["client"].__dict__["module"],
-                }
+        if self.initalized:
+            print("Launch Screen")
+            for c in self.factory.clients:
+                if c["client"].__dict__["module"] == client.__dict__["module"]:
+                    online_client = {
+                        "client": c["client"].__dict__["module"],
+                    }
 
-            # Sent to device manager
-            if "MobileDevice" in c["client"].__dict__["module"] and \
-                    "LAUNCHING-SCREENS-RESPONSE" in data["operation"]:
-                self.send_private_message(c["client"], "Done")
+                # Sent to device manager
+                if "MobileDevice" in c["client"].__dict__["module"] and \
+                        "LAUNCHING-SCREENS-RESPONSE" in data["operation"]:
+                    self.send_private_message(c["client"], "Done")
+            else:
+                self.initialization(client, {})
         return
 
     def onClose(self, wasClean, code, reason):
@@ -240,10 +239,12 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         :return:
 
         """
-        self.factory.unregister(self)
+        self.initalized = False
+        print(self.__dict__)
         print("Disconnected ", self.__dict__["module"])
         self.update_disconnected_client({"client": self.__dict__["module"]})
         print(self.connected_clients)
+        self.factory.unregister(self)
         print("Client disconnected: {0}".format(self.peer))
 
     def send_private_message(self, client, message):
@@ -311,18 +312,21 @@ class CommandCenterFactory(WebSocketServerFactory):
 
 
 if __name__ == "__main__":
-    import sys
 
-    from twisted.python import log
-    from twisted.internet import reactor
+    # log.startLogging(sys.stdout)
 
-    log.startLogging(sys.stdout)
+    if len(sys.argv) > 1 and sys.argv[1] == 'debug':
+        log.startLogging(sys.stdout)
+        debug = True
+    else:
+        debug = False
 
-    factory = CommandCenterFactory(u"ws://0.0.0.0:6000")
+    factory = CommandCenterFactory(u"ws://0.0.0.0:3233")
     factory.protocol = CommandCenterServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
     # note to self: if using putChild, the child must be bytes...
 
-    reactor.listenTCP(6000, factory)
+    reactor.listenTCP(3233, factory)
+    print("Command Center Server started on port %s" % (3233,))
 reactor.run()

@@ -71,16 +71,16 @@ class MobileClient:
 
     def __init__(self, ):
         websocket.enableTrace(False)
-        ws = websocket.WebSocketApp("ws://165.227.90.19:6000/",
-                                    on_message=self.on_message,
-                                    on_error=self.on_error,
-                                    on_close=self.on_close)
-
-        # ws = websocket.WebSocketApp("ws://localhost:6000/",
+        # ws = websocket.WebSocketApp("ws://165.227.90.19:3233/",
         #                             on_message=self.on_message,
         #                             on_error=self.on_error,
         #                             on_close=self.on_close)
-        # ws = websocket.WebSocketApp("ws://192.168.0.12:6000/",
+
+        ws = websocket.WebSocketApp("ws://localhost:3233/",
+                                    on_message=self.on_message,
+                                    on_error=self.on_error,
+                                    on_close=self.on_close)
+        # ws = websocket.WebSocketApp("ws://192.168.0.12:3233/",
         #                             on_message=self.on_message,
         #                             on_error=self.on_error,
         #                             on_close=self.on_close)
@@ -88,10 +88,27 @@ class MobileClient:
 
         self.ws = ws
         self.ws.on_open = self.on_open
-        self.ws.run_forever()
+        while True:
+            self.ws.run_forever()
 
     def on_message(self, message):
-        print(message)
+        if "Connected to Command Center Network" in message:
+            print(message)
+
+            self.ws.send(json.dumps(
+                {
+                    "username": "Isaac",
+                    "command_center_id": "vgg_occ",
+                    "session_id": "VI2019CE",
+                    "id": "iPhoneXS",
+                    "operation": "INITIALIZATION",
+                    "client": "MobileDevice"
+                }
+            )
+            )
+        else:
+            print(message)
+
         return message
 
     def on_error(self, error):
@@ -150,19 +167,7 @@ class MobileClient:
         print("thread terminating...")
 
     def on_open(self):
-        if self.mode == "initialize":
-            self.ws.send(json.dumps(
-                {
-                    "username": "Isaac",
-                    "command_center_id": "vgg_occ",
-                    "session_id": "VI2019CE",
-                    "id": "iPhoneXS",
-                    "operation": "INITIALIZATION",
-                    "client": "MobileDevice"
-                }
-            )
-            )
-            self.mode = "run"
+        self.mode = "run"
         if self.mode == "run":
             thread.start_new_thread(self.run, ())
 

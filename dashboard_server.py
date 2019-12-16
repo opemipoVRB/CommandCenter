@@ -183,7 +183,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
     @classmethod
     def get_dashboards(cls, data):
-        cls.available_dashboards = data["dashboards"]
+        cls.available_dashboards.update(data["dashboards"])
         return cls.available_dashboards
 
     @classmethod

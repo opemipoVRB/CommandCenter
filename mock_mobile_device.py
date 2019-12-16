@@ -64,6 +64,7 @@ import time
 
 class MobileClient:
     """
+
     Mobile Client Interface
 
     """
@@ -94,6 +95,7 @@ class MobileClient:
         return message
 
     def on_error(self, error):
+
         return error
 
     def on_close(self):
@@ -115,7 +117,8 @@ class MobileClient:
                     "http://127.0.0.1:5000/#/2",
                     "https://apply.abudlc.edu.ng/api/",
                     "http://127.0.0.1:5000/#/3/3",
-                    "http://127.0.0.1:5000/#/4/3"]
+                    "http://127.0.0.1:5000/#/4/3"
+                ]
 
                 screen_object = {
                     "operation": "LAUNCHING-SCREENS",

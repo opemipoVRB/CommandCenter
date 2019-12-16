@@ -193,8 +193,10 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
     @classmethod
     def update_disconnected_client(cls, clients):
-        cls.available_dashboards.clear()
+        if not cls.connected_clients:
+            cls.available_dashboards.clear()
         return cls.connected_clients.remove(clients)
+
 
     @classmethod
     def get_connected_clients(cls):

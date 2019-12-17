@@ -72,7 +72,6 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         }
         self.process = "initialization"
         self.previous_process = None
-        self.initalized = False
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
@@ -132,6 +131,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
             except Exception:
                 pass
         if data["operation"] in self.processes:
+
+            print("Mad Oh", data["operation"])
             self.processes[data["operation"]](client, data)
         else:
             self.send_broadcast_message(client, "Invalid Operation")
@@ -150,6 +151,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         message = "This are the connected clients"
         print("Initialization of client {} ".format(client), data)
 
+        print("This is Data for Debugging Purpose   **********", data)
+
         client.__dict__.update({"module": data["client"]})
 
         if "dashboards" in data:
@@ -160,7 +163,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         print("Connected clients", self.get_connected_clients())
 
         for c in self.factory.clients:
-            if c["client"].__dict__["module"] == client.__dict__["module"]:
+            print(str(client.__dict__) in str(c["client"].__dict__))
+            if str(c["client"].__dict__) in str(client.__dict__):
                 online_client = {
                     "client": c["client"].__dict__["module"],
                 }
@@ -175,9 +179,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
                 "clients": self.get_connected_clients(),
                 "dashboards": self.available_dashboards
             }
-            if c["client"].__dict__["module"] == "MobileDevice":
-                self.send_private_message(c["client"], response)
-                print("Private Message sent")
+            self.send_private_message(c["client"], response)
+            print("Private Message sent")
 
         print("This Clients are now Online ", self.connected_clients)
         self.initalized = True
@@ -212,20 +215,9 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         return
 
     def launch_screen_response(self, client, data):
-        if self.initalized:
-            print("Launch Screen")
-            for c in self.factory.clients:
-                if c["client"].__dict__["module"] == client.__dict__["module"]:
-                    online_client = {
-                        "client": c["client"].__dict__["module"],
-                    }
+        print("Launch Screen")
+        self.send_broadcast_message(client, "Done")
 
-                # Sent to device manager
-                if "MobileDevice" in c["client"].__dict__["module"] and \
-                        "LAUNCHING-SCREENS-RESPONSE" in data["operation"]:
-                    self.send_private_message(c["client"], "Done")
-            else:
-                self.initialization(client, {})
         return
 
     def onClose(self, wasClean, code, reason):
@@ -239,8 +231,6 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         :return:
 
         """
-        self.initalized = False
-        print(self.__dict__)
         print("Disconnected ", self.__dict__["module"])
         self.update_disconnected_client({"client": self.__dict__["module"]})
         print(self.connected_clients)
@@ -321,12 +311,12 @@ if __name__ == "__main__":
     else:
         debug = False
 
-    factory = CommandCenterFactory(u"ws://0.0.0.0:3213")
+    factory = CommandCenterFactory(u"ws://0.0.0.0:3233")
     factory.protocol = CommandCenterServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
     # note to self: if using putChild, the child must be bytes...
 
-    reactor.listenTCP(3213, factory)
-    print("Command Center Server started on port %s" % (3213,))
+    reactor.listenTCP(3233, factory)
+    print("Command Center Server started on port %s" % (3233,))
 reactor.run()

@@ -321,12 +321,12 @@ if __name__ == "__main__":
     else:
         debug = False
 
-    factory = CommandCenterFactory(u"ws://0.0.0.0:3233")
+    factory = CommandCenterFactory(u"ws://0.0.0.0:3213")
     factory.protocol = CommandCenterServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
     # note to self: if using putChild, the child must be bytes...
 
-    reactor.listenTCP(3233, factory)
-    print("Command Center Server started on port %s" % (3233,))
+    reactor.listenTCP(3213, factory)
+    print("Command Center Server started on port %s" % (3213,))
 reactor.run()

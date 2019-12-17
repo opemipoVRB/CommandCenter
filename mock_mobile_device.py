@@ -71,15 +71,15 @@ class MobileClient:
 
     def __init__(self, ):
         websocket.enableTrace(False)
-        # ws = websocket.WebSocketApp("ws://165.227.90.19:3233/",
-        #                             on_message=self.on_message,
-        #                             on_error=self.on_error,
-        #                             on_close=self.on_close)
-
-        ws = websocket.WebSocketApp("ws://localhost:3233/",
+        ws = websocket.WebSocketApp("ws://165.227.90.19:3233/",
                                     on_message=self.on_message,
                                     on_error=self.on_error,
                                     on_close=self.on_close)
+
+        # ws = websocket.WebSocketApp("ws://localhost:3233/",
+        #                             on_message=self.on_message,
+        #                             on_error=self.on_error,
+        #                             on_close=self.on_close)
         # ws = websocket.WebSocketApp("ws://192.168.0.12:3233/",
         #                             on_message=self.on_message,
         #                             on_error=self.on_error,

@@ -49,6 +49,7 @@
 
 """
 import json
+from json import JSONDecodeError
 
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
@@ -102,15 +103,22 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         # client is also self
         client = self
         # Send Response to every one
-        payload = payload.decode("utf-8")
-        payload = json.loads(payload)
-        # print("Client {0} sending message: {1}".format(self.peer, payload))
-        try:
-            self.process = payload["operation"]
-        except KeyError:
-            pass
 
-        self.verify_operation(client, payload)
+        try:
+            payload = payload.decode("utf-8")
+            payload = json.loads(payload)
+
+            try:
+                self.process = payload["operation"]
+            except KeyError:
+                pass
+
+            self.verify_operation(client, payload)
+
+        except JSONDecodeError:
+            self.send_private_message(client, {"warning": "Invalid message type, expected a message with protocol to "
+                                                          "be initiated."})
+        # print("Client {0} sending message: {1}".format(self.peer, payload))
 
     def verify_operation(self, client, data):
 
@@ -131,11 +139,9 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
             except Exception:
                 pass
         if data["operation"] in self.processes:
-
-            print("Mad Oh", data["operation"])
             self.processes[data["operation"]](client, data)
         else:
-            self.send_broadcast_message(client, "Invalid Operation")
+            self.send_private_message(client, {"warning": "Invalid Operation, an unrecognised protocol was initiated"})
         return
 
     def initialization(self, client, data):

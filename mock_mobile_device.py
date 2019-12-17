@@ -76,14 +76,11 @@ class MobileClient:
         #                             on_error=self.on_error,
         #                             on_close=self.on_close)
 
-        # ws = websocket.WebSocketApp("ws://localhost:3233/",
-        #                             on_message=self.on_message,
-        #                             on_error=self.on_error,
-        #                             on_close=self.on_close)
-        ws = websocket.WebSocketApp("ws://192.168.0.116:3233/",
+        ws = websocket.WebSocketApp("ws://localhost:3233/",
                                     on_message=self.on_message,
                                     on_error=self.on_error,
                                     on_close=self.on_close)
+
         self.mode = "initialize"
 
         self.ws = ws
@@ -96,6 +93,7 @@ class MobileClient:
             print(message)
 
             self.ws.send(json.dumps(
+
                 {
                     "username": "Isaac",
                     "command_center_id": "vgg_occ",
@@ -158,12 +156,11 @@ class MobileClient:
                 send = input("Type \" send\" to send dashboards.\n:::>>")
                 if send == "send":
                     screen_object = json.dumps(screen_object)
-                    print(type(screen_object))
                     self.ws.send(screen_object)
             except KeyboardInterrupt:
                 driver = False
         time.sleep(1)
-        self.ws.close()
+        # self.ws.close()
         print("thread terminating...")
 
     def on_open(self):

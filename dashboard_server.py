@@ -132,12 +132,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
         """
         response = "Verifying initiated operation by " + data["client"] + " client."
-        for c in self.factory.clients:
-            try:
-                if "MobileDevice" in c["client"].__dict__["module"]:
-                    self.send_private_message(c["client"], response)  # Action
-            except Exception:
-                pass
+
         if data["operation"] in self.processes:
             self.processes[data["operation"]](client, data)
         else:
@@ -156,8 +151,6 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
         message = "This are the connected clients"
         print("Initialization of client {} ".format(client), data)
-
-        print("This is Data for Debugging Purpose   **********", data)
 
         client.__dict__.update({"module": data["client"]})
 
@@ -237,11 +230,10 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         :return:
 
         """
-        print("Disconnected ", self.__dict__["module"])
         self.update_disconnected_client({"client": self.__dict__["module"]})
-        print(self.connected_clients)
+        print(self.__dict__["module"], "with IP address", self.peer, " disconnected ")
         self.factory.unregister(self)
-        print("Client disconnected: {0}".format(self.peer))
+        print(self.connected_clients)
 
     def send_private_message(self, client, message):
         """

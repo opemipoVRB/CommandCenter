@@ -91,6 +91,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         print("Client connected: {0}".format(self.peer))
         print("Client connected: {0}".format(self))
         self.factory.communicate(self, "Connected to Command Center Network", True)
+        print("Sent a message already...")
 
     def onMessage(self, payload, isBinary):
         """

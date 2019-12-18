@@ -233,8 +233,11 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         :return:
 
         """
-        self.update_disconnected_client({"client": self.__dict__["module"]})
-        print(self.__dict__["module"], "with IP address", self.peer, " disconnected ")
+        try:
+            self.update_disconnected_client({"client": self.__dict__["module"]})
+            print(self.__dict__["module"], "with IP address", self.peer, " disconnected ")
+        except KeyError:
+            print("Unknown Client with IP address ", self.peer, "disconnected")
         self.factory.unregister(self)
         print(self.connected_clients)
 

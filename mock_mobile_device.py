@@ -73,8 +73,7 @@ class MobileClient:
         websocket.enableTrace(False)
         ws = websocket.WebSocketApp("ws://165.227.90.19:3233/",
                                     on_message=self.on_message,
-                                    on_e
-        rror=self.on_error,
+                                    on_error=self.on_error,
                                     on_close=self.on_close)
 
         # ws = websocket.WebSocketApp("ws://localhost:3233/",

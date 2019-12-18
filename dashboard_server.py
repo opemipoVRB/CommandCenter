@@ -104,6 +104,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         client = self
         # Send Response to every one
 
+        print("First Message   ", payload)
+
         try:
             payload = payload.decode("utf-8")
             payload = json.loads(payload)

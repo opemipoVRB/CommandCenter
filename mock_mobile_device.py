@@ -89,9 +89,9 @@ class MobileClient:
             self.ws.run_forever()
 
     def on_message(self, message):
+        print(message)
         if "Connected to Command Center Network" in message:
             print(message)
-
             self.ws.send(json.dumps(
 
                 {

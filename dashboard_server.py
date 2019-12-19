@@ -119,8 +119,8 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
             self.verify_operation(client, payload)
 
         except JSONDecodeError:
-            self.send_private_message(client, {"warning": "Invalid message type, expected a message with protocol to "
-                                                          "be initiated."})
+            self.send_private_message(client, {'warning': 'Invalid message type, expected a message with protocol to '
+                                                          'be initiated.'})
         # print("Client {0} sending message: {1}".format(self.peer, payload))
 
     def verify_operation(self, client, data):
@@ -139,7 +139,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
         if data["operation"] in self.processes:
             self.processes[data["operation"]](client, data)
         else:
-            self.send_private_message(client, {"warning": "Invalid Operation, an unrecognised protocol was initiated"})
+            self.send_private_message(client, {'warning': 'Invalid Operation, an unrecognised protocol was initiated'})
         return
 
     def initialization(self, client, data):
@@ -177,11 +177,11 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
 
         for c in self.factory.clients:
             response = {
-                "message": message,
-                "clients": self.get_connected_clients(),
-                "dashboards": self.available_dashboards
+                'message': message,
+                'clients': self.get_connected_clients(),
+                'dashboards': self.available_dashboards
             }
-            self.send_private_message(c["client"], response)
+            self.send_private_message(c['client'], response)
             print("Private Message sent")
 
         print("This Clients are now Online ", self.connected_clients)

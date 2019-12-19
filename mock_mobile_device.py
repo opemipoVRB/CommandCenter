@@ -76,7 +76,7 @@ class MobileClient:
                                     on_error=self.on_error,
                                     on_close=self.on_close)
 
-        # ws = websocket.WebSocketApp("ws://localhost:3233/",
+        # ws = websocket.WebSocketApp("ws://localhost:8080/",
         #                             on_message=self.on_message,
         #                             on_error=self.on_error,
         #                             on_close=self.on_close)
@@ -122,6 +122,7 @@ class MobileClient:
             try:
                 time.sleep(1)
                 print("Get Dashboards")
+
                 urls_one = [
                     "https://flightaware.com/live/map",
                     "https://flightaware.com/adsb/stats/user/EbenezerOg#stats-34294",

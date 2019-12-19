@@ -181,7 +181,7 @@ class CommandCenterServerProtocol(WebSocketServerProtocol):
                 'clients': self.get_connected_clients(),
                 'dashboards': self.available_dashboards
             }
-            self.send_private_message(c['client'], response)
+            self.send_private_message(c['client'], json.dumps(response))
             print("Private Message sent")
 
         print("This Clients are now Online ", self.connected_clients)
